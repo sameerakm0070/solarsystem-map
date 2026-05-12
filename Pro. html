@@ -1,0 +1,94 @@
+[12/05, 7:42 am] Sameera 🖤: CREATE DATABASE school_db;
+USE school_db;
+
+CREATE TABLE students (
+    roll_no INT PRIMARY KEY,
+    name VARCHAR(50),
+    password VARCHAR(50)
+);
+
+CREATE TABLE marks (
+    roll_no INT,
+    subject VARCHAR(30),
+    score INT,
+    FOREIGN KEY (roll_no) REFERENCES students(roll_no)
+);
+
+-- Sample Data
+INSERT INTO students VALUES (101, 'Alice Smith', 'pass123');
+INSERT INTO marks VALUES (101, 'Mathematics', 85), (101, 'Physics', 90), (101, 'Chemistry', 78);
+[12/05, 7:42 am] Sameera 🖤: <html>
+<body>
+    <h2>Student Portal Login</h2>
+    <form action="dashboard.jsp" method="post">
+        Roll No: <input type="text" name="roll_no"><br><br>
+        Password: <input type="password" name="password"><br><br>
+        <input type="submit" value="Login">
+    </form>
+</body>
+</html>
+[12/05, 7:42 am] Sameera 🖤: <%@ page import="java.sql.*" %>
+<html>
+<body>
+    <h2>Student Report Card</h2>
+    <table border="1">
+        <tr>
+            <th>Roll No</th>
+            <th>Name</th>
+            <th>Subject</th>
+            <th>Marks</th>
+        </tr>
+        <%
+            String roll = request.getParameter("roll_no");
+            String pass = request.getParameter("password");
+            int totalScore = 0;
+            boolean userFound = false;
+
+            try {
+                // 1. Load Driver and Establish Connection
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/school_db", "root", "your_password");
+
+                // 2. SQL Join to fetch student info and marks
+                String query = "SELECT s.roll_no, s.name, m.subject, m.score " +
+                               "FROM students s JOIN marks m ON s.roll_no = m.roll_no " +
+                               "WHERE s.roll_no = ? AND s.password = ?";
+                
+                PreparedStatement pst = conn.prepareStatement(query);
+                pst.setString(1, roll);
+                pst.setString(2, pass);
+                ResultSet rs = pst.executeQuery();
+
+                // 3. Iterate through results
+                while(rs.next()) {
+                    userFound = true;
+                    totalScore += rs.getInt("score");
+        %>
+        <tr>
+            <td><%= rs.getInt("roll_no") %></td>
+            <td><%= rs.getString("name") %></td>
+            <td><%= rs.getString("subject") %></td>
+            <td><%= rs.getInt("score") %></td>
+        </tr>
+        <%
+                }
+                if(userFound) {
+        %>
+        <tr>
+            <td colspan="3"><strong>Total Score</strong></td>
+            <td><strong><%= totalScore %></strong></td>
+        </tr>
+        <%
+                } else {
+                    out.println("<p style='color:red;'>Invalid Roll Number or Password!</p>");
+                }
+                conn.close();
+            } catch(Exception e) {
+                out.println("Error: " + e.getMessage());
+            }
+        %>
+    </table>
+    <br>
+    <a href="index.jsp">Logout</a>
+</body>
+</html>
