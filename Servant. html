@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Survey Form</title>
+
+<script>
+function autosave() {
+
+    const formData = new FormData(document.getElementById("surveyForm"));
+
+    fetch("SurveyServlet", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById("msg").innerHTML = data;
+    });
+}
+
+setInterval(autosave, 10000); // Autosave every 10 seconds
+</script>
+
+</head>
+<body>
+
+<h2>Customer Survey</h2>
+
+<form id="surveyForm">
+
+Name:
+<input type="text" name="name"><br><br>
+
+Email:
+<input type="email" name="email"><br><br>
+
+Age:
+<input type="number" name="age"><br><br>
+
+Rating:
+<select name="rating">
+<option value="">Select</option>
+<option>Excellent</option>
+<option>Good</option>
+<option>Average</option>
+<option>Poor</option>
+</select><br><br>
+
+Comments:
+<textarea name="comments"></textarea><br><br>
+
+<button type="button" onclick="autosave()">Submit</button>
+
+</form>
+
+<p id="msg" style="color:green;"></p>
+
+</body>
+</html>
+
+
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Date;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet("/SurveyServlet")
+public class SurveyServlet extends HttpServlet {
+
+    protected void doPost(HttpServletRequest request,
+                          HttpServletResponse response)
+                          throws ServletException, IOException {
+
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        String name = request.getParameter("name");
+        String email = request.getParameter("email");
+        String ageStr = request.getParameter("age");
+        String rating = request.getParameter("rating");
+        String comments = request.getParameter("comments");
+
+        // Server-side validation
+
+        if (name == null || name.trim().isEmpty()) {
+            out.println("Name is required");
+            return;
+        }
+
+        if (email == null || !email.contains("@")) {
+            out.println("Valid Email is required");
+            return;
+        }
+
+        try {
+            int age = Integer.parseInt(ageStr);
+            if (age <= 0) {
+                out.println("Age must be positive");
+                return;
+            }
+        } catch (Exception e) {
+            out.println("Age must be a number");
+            return;
+        }
+
+        if (rating == null || rating.isEmpty()) {
+            out.println("Rating is required");
+            return;
+        }
+
+        if (comments == null || comments.trim().isEmpty()) {
+            out.println("Comments required");
+            return;
+        }
+
+        // No session management used
+
+        out.println("Autosaved Successfully at " + new Date());
+    }
+}
